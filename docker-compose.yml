@@ -1,0 +1,19 @@
+version: '3.7'
+services:
+  db:
+    image: postgres
+    container_name: postgres_container
+    environment:
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_USER=docker
+      - POSTGRES_DB=personal-finances-db
+    restart: always
+    ports:
+      - "5432:5432"
+  redis:
+    image: arm64v8/redis
+    container_name: redis_container
+    ports:
+      - "6379:6379"
+    depends_on:
+      - db
