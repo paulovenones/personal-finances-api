@@ -16,3 +16,9 @@ export const accessTokenPrivateKey = loadEnvironmentVariables(
 );
 export const port = Number(loadEnvironmentVariables("SERVER_PORT"));
 export const serverHost = loadEnvironmentVariables("SERVER_HOST");
+export const authRefreshTokenExpiration = Number(
+  loadEnvironmentVariables("AUTH_REFRESH_TOKEN_EXPIRATION")
+);
+export const authTokenExpiration = Number(
+  loadEnvironmentVariables("AUTH_TOKEN_EXPIRATION")
+);

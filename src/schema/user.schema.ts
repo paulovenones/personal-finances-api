@@ -22,5 +22,17 @@ export const loginUserSchema = object({
   ),
 });
 
+export const logoutUserSchema = object({
+  refresh_token: string({ required_error: "Refresh token is required" }).uuid(
+    "Invalid refresh token"
+  ),
+});
+
+export const refreshUserTokenSchema = object({
+  refresh_token: string({ required_error: "Refresh token is required" }).uuid(
+    "Invalid refresh token"
+  ),
+});
+
 export type CreateUserRequest = TypeOf<typeof createUserSchema>;
 export type LoginUserRequest = TypeOf<typeof loginUserSchema>;
