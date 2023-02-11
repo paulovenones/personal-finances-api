@@ -15,37 +15,25 @@ import {
 
 export const userRoutes = async (app: FastifyInstance) => {
   // Route for create a new user
-  app.post("/signup", async (request, reply) => {
+  app.post("/signup", async (request) => {
     const body = createUserSchema.parse(request.body);
-    try {
-      const user = await postCreateUser(body);
-      return user;
-    } catch (err) {
-      reply.code(500).send(err);
-    }
+    const user = await postCreateUser(body);
+    return user;
   });
 
   // Route for login a user
-  app.post("/login", async (request, reply) => {
+  app.post("/login", async (request) => {
     const loginCredentials = loginUserSchema.parse(request.body);
-    try {
-      const token = await postLoginUser(loginCredentials, app);
-      return { token };
-    } catch (err) {
-      reply.code(500).send(err);
-    }
+    const { token, refreshToken } = await postLoginUser(loginCredentials, app);
+    return { token, refreshToken };
   });
 
   // Route for refresh user auth token
-  app.post("/refresh-token", async (request, reply) => {
+  app.post("/refresh-token", async (request) => {
     const { refresh_token } = refreshUserTokenSchema.parse(request.body);
-    try {
-      const token = await postRefreshUserToken(refresh_token, app);
+    const token = await postRefreshUserToken(refresh_token, app);
 
-      return { token };
-    } catch (err) {
-      reply.code(500).send(err);
-    }
+    return { token };
   });
 
   // Route for logout a user
@@ -53,15 +41,11 @@ export const userRoutes = async (app: FastifyInstance) => {
     "/logout",
     { preHandler: [ensureAuthenticated] },
     async (request, reply) => {
-      try {
-        const { refresh_token } = logoutUserSchema.parse(request.body);
+      const { refresh_token } = logoutUserSchema.parse(request.body);
 
-        await postLogoutUser(refresh_token, app);
+      await postLogoutUser(refresh_token, app);
 
-        reply.code(200);
-      } catch (err) {
-        reply.code(500).send(err);
-      }
+      reply.code(200);
     }
   );
 };

@@ -1,13 +1,10 @@
 import bcrypt from "bcryptjs";
 import { FastifyInstance } from "fastify";
-import jsonwebtoken from "jsonwebtoken";
-import {
-  accessTokenPrivateKey,
-  authRefreshTokenExpiration,
-} from "../../config/configuration";
+import { AUTH_REFRESH_TOKEN_EXPIRATION } from "../../config/configuration";
+import { CustomError } from "../../helpers/CustomError";
 
 import { CreateUserRequest, LoginUserRequest } from "../../schema/user.schema";
-import { generateAuthenticationToken } from "../../utils/generateAuthenticationToken";
+import { generateAuthenticationToken } from "../../utils/generate-authentication-token";
 import {
   createNewUser,
   deleteRefreshToken,
@@ -20,16 +17,17 @@ export const postCreateUser = async ({
   name,
   email,
   password,
+  timezone,
 }: CreateUserRequest) => {
   const userAlreadyExists = await getUserByEmail(email);
 
   if (userAlreadyExists) {
-    throw new Error("User already exists!");
+    throw new CustomError("User already exists!", 409);
   }
 
   const passwordHash = await bcrypt.hash(password, 8);
 
-  const user = await createNewUser(name, email, passwordHash);
+  const user = await createNewUser(name, email, passwordHash, timezone);
 
   return user;
 };
@@ -41,7 +39,7 @@ export const postLoginUser = async (
   const userAlreadyExists = await getUserByEmail(email);
 
   if (!userAlreadyExists) {
-    throw new Error("Email or password incorrect");
+    throw new CustomError("Email or password incorrect", 401);
   }
 
   const passwordMatch = await bcrypt.compare(
@@ -50,12 +48,12 @@ export const postLoginUser = async (
   );
 
   if (!passwordMatch) {
-    throw new Error("Email or password incorrect");
+    throw new CustomError("Email or password incorrect", 401);
   }
 
   const token = generateAuthenticationToken(userAlreadyExists.id);
 
-  const expiresIn = authRefreshTokenExpiration * 60;
+  const expiresIn = AUTH_REFRESH_TOKEN_EXPIRATION * 60;
 
   const refreshToken = await storeRefreshToken(
     userAlreadyExists.id,
@@ -73,7 +71,7 @@ export const postRefreshUserToken = async (
   const tokenUserId = await fetchRefreshTokenUserId(refreshToken, app.redis);
 
   if (!tokenUserId) {
-    throw new Error("Refresh token invalid");
+    throw new CustomError("Refresh token invalid", 400);
   }
 
   const token = generateAuthenticationToken(tokenUserId);
@@ -85,9 +83,14 @@ export const postLogoutUser = async (
   refreshToken: string,
   app: FastifyInstance
 ) => {
-  const isLoggedOut = await deleteRefreshToken(refreshToken, app.redis);
+  const refreshTokenExists = await fetchRefreshTokenUserId(
+    refreshToken,
+    app.redis
+  );
 
-  if (!isLoggedOut) {
-    throw new Error("Error during logout");
+  if (!refreshTokenExists) {
+    throw new CustomError("Invalid refresh token", 400);
   }
+
+  await deleteRefreshToken(refreshToken, app.redis);
 };

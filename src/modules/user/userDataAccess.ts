@@ -12,13 +12,15 @@ export const getUserByEmail = async (email: string) => {
 export const createNewUser = async (
   name: string,
   email: string,
-  password: string
+  password: string,
+  timezone: string
 ) => {
   const user = await prisma.user.create({
     data: {
       name,
       email,
       password,
+      timezone,
     },
   });
 
@@ -31,7 +33,7 @@ export const storeRefreshToken = async (
   redisClient: FastifyRedis
 ) => {
   const refreshTokenId = crypto.randomUUID();
-  const generateRefreshToken = await redisClient.set(
+  await redisClient.set(
     `refresh_token:${refreshTokenId}`,
     userId,
     "EX",

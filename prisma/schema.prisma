@@ -15,6 +15,7 @@ model User {
   name     String @db.VarChar(255)
   email    String @unique
   password String
+  timezone String
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt

@@ -1,4 +1,5 @@
 import env from "dotenv";
+
 env.config();
 
 const loadEnvironmentVariables = (keyName: string) => {
@@ -11,14 +12,16 @@ const loadEnvironmentVariables = (keyName: string) => {
   return envVar;
 };
 
-export const accessTokenPrivateKey = loadEnvironmentVariables(
+export const ACCESS_TOKEN_PRIVATE_KEY = loadEnvironmentVariables(
   "ACCESS_TOKEN_PRIVATE_KEY"
 );
-export const port = Number(loadEnvironmentVariables("SERVER_PORT"));
-export const serverHost = loadEnvironmentVariables("SERVER_HOST");
-export const authRefreshTokenExpiration = Number(
+export const PORT = Number(loadEnvironmentVariables("SERVER_PORT"));
+export const SERVER_HOST = loadEnvironmentVariables("SERVER_HOST");
+export const AUTH_REFRESH_TOKEN_EXPIRATION = Number(
   loadEnvironmentVariables("AUTH_REFRESH_TOKEN_EXPIRATION")
 );
-export const authTokenExpiration = Number(
+export const AUTH_TOKEN_EXPIRATION = Number(
   loadEnvironmentVariables("AUTH_TOKEN_EXPIRATION")
 );
+export const REDIS_HOST = loadEnvironmentVariables("REDIS_HOST");
+export const REDIS_PORT = Number(loadEnvironmentVariables("REDIS_PORT"));

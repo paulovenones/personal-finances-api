@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest, HookHandlerDoneFunction } from "fastify";
 import jsonwebtoken from "jsonwebtoken";
 
-import { accessTokenPrivateKey } from "../config/configuration";
+import { ACCESS_TOKEN_PRIVATE_KEY } from "../config/configuration";
 
 export const ensureAuthenticated = (
   request: FastifyRequest,
@@ -16,10 +16,10 @@ export const ensureAuthenticated = (
 
   const [, token] = authToken.split(" ");
   try {
-    jsonwebtoken.verify(token, accessTokenPrivateKey);
+    jsonwebtoken.verify(token, ACCESS_TOKEN_PRIVATE_KEY);
 
     return done();
   } catch (err) {
-    return reply.code(401).send({ message: "Token invalid" });
+    return reply.code(401).send({ message: "Auth token invalid or expired" });
   }
 };
