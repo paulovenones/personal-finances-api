@@ -8,9 +8,7 @@ export const createTxnCategorySchema = object({
     4,
     "Color must be at least 4 characters"
   ),
-  userId: string({ required_error: "User id is required" }).uuid(
-    "Invalid user id format"
-  ),
+  type: string({ required_error: "Type is required" }),
 });
 
 export const updateTxnCategoryParamSchema = object({
@@ -27,6 +25,7 @@ export const updateTxnCategoryBodySchema = object({
     4,
     "Color must be at least 4 characters"
   ),
+  type: string({ required_error: "Type is required" }),
 });
 
 export type CreateTxnCategoryRequest = TypeOf<typeof createTxnCategorySchema>;

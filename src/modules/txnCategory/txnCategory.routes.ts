@@ -19,12 +19,11 @@ export const txnCategoryRoutes = async (app: FastifyInstance) => {
     { preHandler: [ensureAuthenticated] },
     async (request) => {
       const body = createTxnCategorySchema.parse(request.body);
+      const userId = decodeUserIdFromAuthToken(request.headers.authorization!);
 
-      const txnCategory = await postCreateTxnCategory(body);
+      const txnCategory = await postCreateTxnCategory(body, userId);
 
-      return {
-        txnCategory,
-      };
+      return txnCategory;
     }
   );
 
@@ -32,7 +31,7 @@ export const txnCategoryRoutes = async (app: FastifyInstance) => {
     "/txn-category",
     { preHandler: [ensureAuthenticated] },
     async (request) => {
-      const userId = decodeUserIdFromAuthToken(request.headers.authorization);
+      const userId = decodeUserIdFromAuthToken(request.headers.authorization!);
       const txnCategories = await getAllUserTxnCategories(userId);
 
       return { txnCategories };

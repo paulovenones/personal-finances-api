@@ -1,14 +1,17 @@
+import { TransactionTypes } from "../../enums/TransactionTypes";
 import { prisma } from "../../lib/prisma";
 
 export const createNewTxnCategory = async (
   name: string,
   color: string,
+  type: string,
   userId: string
 ) => {
   const txnCategory = await prisma.txnCategory.create({
     data: {
       name,
       color,
+      type,
       userId,
     },
   });
@@ -53,6 +56,7 @@ export const fetchAllUserTxnCategories = async (userId: string) => {
 export const updateTxnCategory = async (
   id: string,
   name: string,
+  type: string,
   color: string
 ) => {
   const txnCategory = await prisma.txnCategory.update({
@@ -62,6 +66,7 @@ export const updateTxnCategory = async (
     data: {
       name,
       color,
+      type,
     },
   });
 

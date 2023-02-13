@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest, HookHandlerDoneFunction } from "fastify";
 import jsonwebtoken from "jsonwebtoken";
 
 import { ACCESS_TOKEN_PRIVATE_KEY } from "../config/configuration";
+import { CustomError } from "../helpers/CustomError";
 
 export const ensureAuthenticated = (
   request: FastifyRequest,
@@ -20,6 +21,6 @@ export const ensureAuthenticated = (
 
     return done();
   } catch (err) {
-    return reply.code(401).send({ message: "Auth token invalid or expired" });
+    throw new CustomError("Auth token invalid or expired", 401);
   }
 };

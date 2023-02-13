@@ -1,5 +1,4 @@
 import jwt, { Jwt } from "jsonwebtoken";
-import { CustomError } from "../helpers/CustomError";
 
 type DecodedJwtPayload = {
   userId: string;
@@ -7,10 +6,7 @@ type DecodedJwtPayload = {
   exp: number;
 };
 
-export const decodeUserIdFromAuthToken = (token?: string) => {
-  if (!token) {
-    throw new CustomError("Auth token is required", 401);
-  }
+export const decodeUserIdFromAuthToken = (token: string) => {
   const [, handledToken] = token.split(" ");
 
   const options = {
