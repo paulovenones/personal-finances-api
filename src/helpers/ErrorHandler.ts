@@ -1,9 +1,4 @@
-import {
-  FastifyError,
-  FastifyInstance,
-  FastifyReply,
-  FastifyRequest,
-} from "fastify";
+import { FastifyError, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 
 export const errorHandler = (

@@ -1,5 +1,6 @@
 import Fastify from "fastify";
 import fastifyRedis from "@fastify/redis";
+import cors from "@fastify/cors";
 
 import {
   PORT,
@@ -10,8 +11,9 @@ import {
 import { errorHandler } from "./helpers/ErrorHandler";
 import { appRoutes } from "./routes";
 
-const app = Fastify({ logger: false });
+const app = Fastify({ logger: true });
 
+app.register(cors);
 app.register(appRoutes);
 app.setErrorHandler(errorHandler);
 app.register(fastifyRedis, {

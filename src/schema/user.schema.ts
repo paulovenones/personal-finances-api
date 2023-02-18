@@ -4,7 +4,7 @@ export const createUserSchema = object({
   name: string({ required_error: "Name is required" }),
   email: string({ required_error: "Email is required" }).email("Invalid email"),
   password: string({ required_error: "Password is required" })
-    .min(8, "Password must at least 8 characters")
+    .min(8, "Password must be at least 8 characters")
     .max(32, "Password must be up to 32 characters"),
   passwordConfirm: string({ required_error: "Please confirm your password" }),
   timezone: string({ required_error: "Timezone is required" }),

@@ -17,7 +17,7 @@ export const userRoutes = async (app: FastifyInstance) => {
   // Route for create a new user
   app.post("/signup", async (request) => {
     const body = createUserSchema.parse(request.body);
-    const user = await postCreateUser(body);
+    const user = await postCreateUser(body, app);
     return user;
   });
 

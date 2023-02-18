@@ -13,13 +13,14 @@ import {
   storeRefreshToken,
 } from "./userDataAccess";
 
-export const postCreateUser = async ({
-  name,
-  email,
-  password,
-  timezone,
-}: CreateUserRequest) => {
-  const userAlreadyExists = await getUserByEmail(email);
+const REFRESH_TOKEN_EXPIRATION = AUTH_REFRESH_TOKEN_EXPIRATION * 60;
+
+export const postCreateUser = async (
+  { name, email, password, timezone }: CreateUserRequest,
+  app: FastifyInstance
+) => {
+  const lowerCaseEmail = email.toLowerCase();
+  const userAlreadyExists = await getUserByEmail(lowerCaseEmail);
 
   if (userAlreadyExists) {
     throw new CustomError("User already exists!", 409);
@@ -27,16 +28,29 @@ export const postCreateUser = async ({
 
   const passwordHash = await bcrypt.hash(password, 8);
 
-  const user = await createNewUser(name, email, passwordHash, timezone);
+  const user = await createNewUser(
+    name,
+    lowerCaseEmail,
+    passwordHash,
+    timezone
+  );
 
-  return user;
+  const token = generateAuthenticationToken(user.id);
+  const refreshToken = await storeRefreshToken(
+    user.id,
+    REFRESH_TOKEN_EXPIRATION,
+    app.redis
+  );
+
+  return { user, token, refreshToken };
 };
 
 export const postLoginUser = async (
   { email, password }: LoginUserRequest,
   app: FastifyInstance
 ) => {
-  const userAlreadyExists = await getUserByEmail(email);
+  const lowerCaseEmail = email.toLowerCase();
+  const userAlreadyExists = await getUserByEmail(lowerCaseEmail);
 
   if (!userAlreadyExists) {
     throw new CustomError("Email or password incorrect", 401);
@@ -53,11 +67,9 @@ export const postLoginUser = async (
 
   const token = generateAuthenticationToken(userAlreadyExists.id);
 
-  const expiresIn = AUTH_REFRESH_TOKEN_EXPIRATION * 60;
-
   const refreshToken = await storeRefreshToken(
     userAlreadyExists.id,
-    expiresIn,
+    REFRESH_TOKEN_EXPIRATION,
     app.redis
   );
 
@@ -71,7 +83,7 @@ export const postRefreshUserToken = async (
   const tokenUserId = await fetchRefreshTokenUserId(refreshToken, app.redis);
 
   if (!tokenUserId) {
-    throw new CustomError("Refresh token invalid", 400);
+    throw new CustomError("Refresh token invalid", 401);
   }
 
   const token = generateAuthenticationToken(tokenUserId);
@@ -89,7 +101,7 @@ export const postLogoutUser = async (
   );
 
   if (!refreshTokenExists) {
-    throw new CustomError("Invalid refresh token", 400);
+    throw new CustomError("Invalid refresh token", 401);
   }
 
   await deleteRefreshToken(refreshToken, app.redis);
