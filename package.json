@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tsx",
+    "build": "npx tsc",
     "dev": "tsx watch src/server.ts",
     "db:migrate": "npx prisma migrate dev --name user-entity --create-only && yarn prisma generate",
     "db:push": "npx prisma db push"
