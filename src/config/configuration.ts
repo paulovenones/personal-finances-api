@@ -25,3 +25,5 @@ export const AUTH_TOKEN_EXPIRATION = Number(
 );
 export const REDIS_HOST = loadEnvironmentVariables("REDIS_HOST");
 export const REDIS_PORT = Number(loadEnvironmentVariables("REDIS_PORT"));
+export const NODE_ENV = loadEnvironmentVariables("NODE_ENV");
+export const CLIENT_URL = loadEnvironmentVariables("CLIENT_URL");

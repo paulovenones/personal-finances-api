@@ -3,6 +3,7 @@ import fastifyRedis from "@fastify/redis";
 import cors from "@fastify/cors";
 
 import {
+  CLIENT_URL,
   PORT,
   REDIS_HOST,
   REDIS_PORT,
@@ -13,7 +14,9 @@ import { appRoutes } from "./routes";
 
 const app = Fastify({ logger: true });
 
-app.register(cors);
+app.register(cors, {
+  origin: CLIENT_URL,
+});
 app.register(appRoutes);
 app.setErrorHandler(errorHandler);
 app.register(fastifyRedis, {
