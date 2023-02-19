@@ -14,7 +14,7 @@ import {
 } from "./user.service";
 
 export const userRoutes = async (app: FastifyInstance) => {
-  app.get("", (_, reply) => {
+  app.get("/", (_, reply) => {
     return reply.status(200);
   });
 
