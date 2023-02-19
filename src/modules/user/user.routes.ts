@@ -14,6 +14,10 @@ import {
 } from "./user.service";
 
 export const userRoutes = async (app: FastifyInstance) => {
+  app.get("", (_, reply) => {
+    return reply.status(200);
+  });
+
   // Route for create a new user
   app.post("/signup", async (request) => {
     const body = createUserSchema.parse(request.body);
