@@ -23,6 +23,13 @@ export const loginUserSchema = object({
   ),
 });
 
+export const verifyRegistrationSchema = object({
+  email: string().min(1, "Email is required").email("Invalid email"),
+  verificationPin: string()
+    .min(4, "Verification PIN must be 4 digits characters")
+    .max(4, "Verification PIN must be 4 digits characters"),
+});
+
 export const logoutUserSchema = object({
   refresh_token: string({ required_error: "Refresh token is required" }).uuid(
     "Invalid refresh token"
@@ -37,3 +44,4 @@ export const refreshUserTokenSchema = object({
 
 export type CreateUserRequest = TypeOf<typeof createUserSchema>;
 export type LoginUserRequest = TypeOf<typeof loginUserSchema>;
+export type VerifyRegistrationRequest = TypeOf<typeof verifyRegistrationSchema>;

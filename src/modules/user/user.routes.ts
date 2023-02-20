@@ -5,12 +5,14 @@ import {
   loginUserSchema,
   logoutUserSchema,
   refreshUserTokenSchema,
+  verifyRegistrationSchema,
 } from "../../schema/user.schema";
 import {
   postCreateUser,
   postLoginUser,
   postLogoutUser,
   postRefreshUserToken,
+  postVerifyRegistration,
 } from "./user.service";
 
 export const userRoutes = async (app: FastifyInstance) => {
@@ -18,10 +20,17 @@ export const userRoutes = async (app: FastifyInstance) => {
     return reply.status(200);
   });
 
-  // Route for create a new user
-  app.post("/signup", async (request) => {
+  // Route for generate a email verification PIN code
+  app.post("/signup", async (request, reply) => {
     const body = createUserSchema.parse(request.body);
-    const user = await postCreateUser(body, app);
+    await postCreateUser(body, app);
+    reply.status(201);
+  });
+
+  // Route for create a new user
+  app.post("/verify-registration", async (request) => {
+    const body = verifyRegistrationSchema.parse(request.body);
+    const user = await postVerifyRegistration(body, app);
     return user;
   });
 

@@ -27,3 +27,7 @@ export const REDIS_HOST = loadEnvironmentVariables("REDIS_HOST");
 export const REDIS_PORT = Number(loadEnvironmentVariables("REDIS_PORT"));
 export const NODE_ENV = loadEnvironmentVariables("NODE_ENV");
 export const CLIENT_URL = loadEnvironmentVariables("CLIENT_URL");
+export const SENDGRID_API_KEY = loadEnvironmentVariables("SENDGRID_API_KEY");
+export const VERIFY_REGISTRATION_PIN_EXPIRATION = Number(
+  loadEnvironmentVariables("VERIFY_REGISTRATION_PIN_EXPIRATION")
+);

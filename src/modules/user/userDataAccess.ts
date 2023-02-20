@@ -3,6 +3,14 @@ import crypto from "crypto";
 
 import { prisma } from "../../lib/prisma";
 
+interface IStoreVerifyRegistrationPin {
+  name: string;
+  password: string;
+  email: string;
+  timezone: string;
+  pin: string;
+}
+
 export const getUserByEmail = async (email: string) => {
   const user = await prisma.user.findFirst({ where: { email } });
 
@@ -25,6 +33,30 @@ export const createNewUser = async (
   });
 
   return user;
+};
+
+export const fetchVerifyRegistrationPin = async (
+  email: string,
+  redis: FastifyRedis
+) => {
+  const verifyRegistrationPin = await redis.get(`verify_pin:${email}`);
+
+  return verifyRegistrationPin;
+};
+
+export const storeVerifyRegistrationPin = async (
+  registrationBody: IStoreVerifyRegistrationPin,
+  expiresIn: number,
+  redis: FastifyRedis
+) => {
+  const registrationPin = await redis.set(
+    `verify_pin:${registrationBody.email}`,
+    JSON.stringify(registrationBody),
+    "EX",
+    expiresIn
+  );
+
+  return registrationPin;
 };
 
 export const storeRefreshToken = async (
