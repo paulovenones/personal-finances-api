@@ -14,9 +14,9 @@ export const createUserSchema = object({
 });
 
 export const loginUserSchema = object({
-  email: string({ required_error: "Email is required" }).email(
-    "Invalid email or password"
-  ),
+  email: string()
+    .min(1, "Email is required")
+    .email("Invalid email or password"),
   password: string({ required_error: "Password is required" }).min(
     8,
     "Invalid email or password"
@@ -42,6 +42,38 @@ export const refreshUserTokenSchema = object({
   ),
 });
 
+export const forgotPasswordSchema = object({
+  email: string().min(1, "Email is required").email("Invalid email"),
+});
+
+export const verifyForgotPasswordResetPinSchema = object({
+  verificationPin: string()
+    .min(4, "Verification PIN must be 4 digits characters")
+    .max(4, "Verification PIN must be 4 digits characters"),
+  email: string().min(1, "Email is required").email("Invalid email"),
+});
+
+export const completeForgotPasswordResetSchema = object({
+  password: string({ required_error: "Password is required" })
+    .min(8, "Password must be at least 8 characters")
+    .max(32, "Password must be up to 32 characters"),
+  passwordConfirm: string({ required_error: "Please confirm your password" }),
+  verificationPin: string()
+    .min(4, "Verification PIN must be 4 digits characters")
+    .max(4, "Verification PIN must be 4 digits characters"),
+  email: string().min(1, "Email is required").email("Invalid email"),
+}).refine((data) => data.password === data.passwordConfirm, {
+  path: ["passwordConfirm"],
+  message: "Passwords do not match",
+});
+
 export type CreateUserRequest = TypeOf<typeof createUserSchema>;
 export type LoginUserRequest = TypeOf<typeof loginUserSchema>;
 export type VerifyRegistrationRequest = TypeOf<typeof verifyRegistrationSchema>;
+export type ForgotPasswordRequest = TypeOf<typeof forgotPasswordSchema>;
+export type VerifyForgotPasswordResetPinRequest = TypeOf<
+  typeof verifyForgotPasswordResetPinSchema
+>;
+export type CompleteForgotPasswordResetRequest = TypeOf<
+  typeof completeForgotPasswordResetSchema
+>;

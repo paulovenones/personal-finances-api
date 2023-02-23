@@ -31,3 +31,6 @@ export const SENDGRID_API_KEY = loadEnvironmentVariables("SENDGRID_API_KEY");
 export const VERIFY_REGISTRATION_PIN_EXPIRATION = Number(
   loadEnvironmentVariables("VERIFY_REGISTRATION_PIN_EXPIRATION")
 );
+export const FORGOT_PASSWORD_PIN_EXPIRATION = Number(
+  loadEnvironmentVariables("FORGOT_PASSWORD_PIN_EXPIRATION")
+);

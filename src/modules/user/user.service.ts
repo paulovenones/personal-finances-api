@@ -2,28 +2,36 @@ import bcrypt from "bcryptjs";
 import { FastifyInstance } from "fastify";
 import {
   AUTH_REFRESH_TOKEN_EXPIRATION,
+  FORGOT_PASSWORD_PIN_EXPIRATION,
   SENDGRID_API_KEY,
   VERIFY_REGISTRATION_PIN_EXPIRATION,
 } from "../../config/configuration";
 import { CustomError } from "../../helpers/CustomError";
-import sgMail, { MailDataRequired } from "@sendgrid/mail";
+import { MailDataRequired } from "@sendgrid/mail";
 
 import {
+  CompleteForgotPasswordResetRequest,
   CreateUserRequest,
   LoginUserRequest,
+  VerifyForgotPasswordResetPinRequest,
   VerifyRegistrationRequest,
 } from "../../schema/user.schema";
 import { generateFourDigitPin } from "../../utils/generate-four-digit-pin";
 import { generateAuthenticationToken } from "../../utils/generate-authentication-token";
 import {
   createNewUser,
+  deletePasswordResetPin,
   deleteRefreshToken,
+  fetchPasswordResetPin,
   fetchRefreshTokenUserId,
   fetchVerifyRegistrationPin,
-  getUserByEmail,
+  fetchUserByEmail,
+  storePasswordResetPin,
   storeRefreshToken,
   storeVerifyRegistrationPin,
+  updateUserPasswordByEmail,
 } from "./userDataAccess";
+import { sgMail } from "../../lib/sgMail";
 
 const REFRESH_TOKEN_EXPIRATION = AUTH_REFRESH_TOKEN_EXPIRATION * 60;
 
@@ -32,7 +40,7 @@ export const postCreateUser = async (
   app: FastifyInstance
 ) => {
   const lowerCaseEmail = email.toLowerCase();
-  const userAlreadyExists = await getUserByEmail(lowerCaseEmail);
+  const userAlreadyExists = await fetchUserByEmail(lowerCaseEmail);
 
   if (userAlreadyExists) {
     throw new CustomError("User already exists!", 409);
@@ -59,7 +67,6 @@ export const postCreateUser = async (
     throw new CustomError("Error on creating verification PIN", 500);
   }
 
-  sgMail.setApiKey(SENDGRID_API_KEY);
   const msg: MailDataRequired = {
     from: "signup@savvycash.app",
     templateId: "d-a026c640cac548f1829502bd2f3e7714",
@@ -92,7 +99,7 @@ export const postVerifyRegistration = async (
   );
 
   if (!verifyRegistrationPin) {
-    throw new CustomError("Invalid verify registration PIN", 401);
+    throw new CustomError("Invalid or expired PIN code", 401);
   }
 
   const verifyRegistrationPinBody = JSON.parse(verifyRegistrationPin);
@@ -103,7 +110,7 @@ export const postVerifyRegistration = async (
   );
 
   if (!pinMatch) {
-    throw new CustomError("Invalid verify registration PIN", 401);
+    throw new CustomError("Invalid or expired PIN code", 401);
   }
 
   const user = await createNewUser(
@@ -128,7 +135,7 @@ export const postLoginUser = async (
   app: FastifyInstance
 ) => {
   const lowerCaseEmail = email.toLowerCase();
-  const userAlreadyExists = await getUserByEmail(lowerCaseEmail);
+  const userAlreadyExists = await fetchUserByEmail(lowerCaseEmail);
 
   if (!userAlreadyExists) {
     throw new CustomError("Email or password incorrect", 401);
@@ -183,4 +190,94 @@ export const postLogoutUser = async (
   }
 
   await deleteRefreshToken(refreshToken, app.redis);
+};
+
+export const getForgotPassword = async (
+  email: string,
+  app: FastifyInstance
+) => {
+  const user = await fetchUserByEmail(email);
+
+  if (!user) {
+    throw new CustomError("User does not exist", 400);
+  }
+
+  const forgotPasswordPinExists = await fetchPasswordResetPin(email, app.redis);
+
+  if (forgotPasswordPinExists) {
+    await deletePasswordResetPin(email, app.redis);
+  }
+
+  const generatedPin = generateFourDigitPin();
+  const hashedPin = await bcrypt.hash(generatedPin, 8);
+
+  await storePasswordResetPin(
+    email,
+    hashedPin,
+    FORGOT_PASSWORD_PIN_EXPIRATION,
+    app.redis
+  );
+
+  const msg: MailDataRequired = {
+    from: "signup@savvycash.app",
+    templateId: "d-9bf44e233fba43f1a700a3976af2556d",
+    personalizations: [
+      {
+        to: email,
+        dynamicTemplateData: {
+          subject: "Savvy | Redefina sua senha",
+          first_name: user.name,
+          firstDigit: generatedPin[0],
+          secondDigit: generatedPin[1],
+          thirdDigit: generatedPin[2],
+          fourthDigit: generatedPin[3],
+        },
+      },
+    ],
+  };
+
+  await sgMail.send(msg);
+  return;
+};
+
+export const postVerifyForgotPasswordResetPin = async (
+  { email, verificationPin }: VerifyForgotPasswordResetPinRequest,
+  app: FastifyInstance
+) => {
+  const hashedResetPinCode = await fetchPasswordResetPin(email, app.redis);
+
+  if (!hashedResetPinCode) {
+    throw new CustomError("Invalid or expired PIN code", 400);
+  }
+
+  const pinMatch = await bcrypt.compare(verificationPin, hashedResetPinCode);
+
+  if (!pinMatch) {
+    throw new CustomError("Invalid or expired PIN code", 401);
+  }
+
+  return;
+};
+
+export const postCompleteForgotPasswordReset = async (
+  { email, password, verificationPin }: CompleteForgotPasswordResetRequest,
+  app: FastifyInstance
+) => {
+  const hashedResetPinCode = await fetchPasswordResetPin(email, app.redis);
+
+  if (!hashedResetPinCode) {
+    throw new CustomError("Invalid or expired PIN code", 400);
+  }
+
+  const pinMatch = await bcrypt.compare(verificationPin, hashedResetPinCode);
+
+  if (!pinMatch) {
+    throw new CustomError("Invalid or expired PIN code", 401);
+  }
+
+  const passwordHash = await bcrypt.hash(password, 8);
+
+  await updateUserPasswordByEmail(passwordHash, email);
+  await deletePasswordResetPin(email, app.redis);
+  return;
 };

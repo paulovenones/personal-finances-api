@@ -11,7 +11,7 @@ interface IStoreVerifyRegistrationPin {
   pin: string;
 }
 
-export const getUserByEmail = async (email: string) => {
+export const fetchUserByEmail = async (email: string) => {
   const user = await prisma.user.findFirst({ where: { email } });
 
   return user;
@@ -29,6 +29,22 @@ export const createNewUser = async (
       email,
       password,
       timezone,
+    },
+  });
+
+  return user;
+};
+
+export const updateUserPasswordByEmail = async (
+  newPassword: string,
+  email: string
+) => {
+  const user = await prisma.user.update({
+    where: {
+      email,
+    },
+    data: {
+      password: newPassword,
     },
   });
 
@@ -95,4 +111,35 @@ export const deleteRefreshToken = async (
   );
 
   return deletedRefreshToken;
+};
+
+export const fetchPasswordResetPin = async (
+  email: string,
+  redis: FastifyRedis
+) => {
+  const pin = redis.get(`password_reset_pin:${email}`);
+  return pin;
+};
+
+export const storePasswordResetPin = async (
+  email: string,
+  pin: string,
+  expiresIn: number,
+  redis: FastifyRedis
+) => {
+  const storedPin = await redis.set(
+    `password_reset_pin:${email}`,
+    pin,
+    "EX",
+    expiresIn
+  );
+  return storedPin;
+};
+
+export const deletePasswordResetPin = async (
+  email: string,
+  redis: FastifyRedis
+) => {
+  await redis.del(`password_reset_pin:${email}`);
+  return;
 };

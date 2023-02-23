@@ -1,18 +1,24 @@
 import { FastifyInstance } from "fastify";
 import { ensureAuthenticated } from "../../middlewares/ensureAuthenticated";
 import {
+  completeForgotPasswordResetSchema,
   createUserSchema,
+  forgotPasswordSchema,
   loginUserSchema,
   logoutUserSchema,
   refreshUserTokenSchema,
+  verifyForgotPasswordResetPinSchema,
   verifyRegistrationSchema,
 } from "../../schema/user.schema";
 import {
+  getForgotPassword,
+  postVerifyForgotPasswordResetPin,
   postCreateUser,
   postLoginUser,
   postLogoutUser,
   postRefreshUserToken,
   postVerifyRegistration,
+  postCompleteForgotPasswordReset,
 } from "./user.service";
 
 export const userRoutes = async (app: FastifyInstance) => {
@@ -25,6 +31,27 @@ export const userRoutes = async (app: FastifyInstance) => {
     const body = createUserSchema.parse(request.body);
     await postCreateUser(body, app);
     reply.status(201);
+  });
+
+  // Route for start forgot password reset
+  app.get("/user/forgot-password/:email", async (request, reply) => {
+    const { email } = forgotPasswordSchema.parse(request.params);
+    await getForgotPassword(email, app);
+    reply.status(200);
+  });
+
+  // Route for verify forgot password reset PIN
+  app.post("/user/forgot-password/verify-pin", async (request, reply) => {
+    const body = verifyForgotPasswordResetPinSchema.parse(request.body);
+    await postVerifyForgotPasswordResetPin(body, app);
+    reply.status(200);
+  });
+
+  // Route for complete forgot password reset
+  app.post("/user/forgot-password/complete", async (request, reply) => {
+    const body = completeForgotPasswordResetSchema.parse(request.body);
+    await postCompleteForgotPasswordReset(body, app);
+    reply.status(200);
   });
 
   // Route for create a new user
