@@ -1,9 +1,8 @@
 import bcrypt from "bcryptjs";
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import {
   AUTH_REFRESH_TOKEN_EXPIRATION,
   FORGOT_PASSWORD_PIN_EXPIRATION,
-  SENDGRID_API_KEY,
   VERIFY_REGISTRATION_PIN_EXPIRATION,
 } from "../../config/configuration";
 import { CustomError } from "../../helpers/CustomError";
@@ -30,8 +29,10 @@ import {
   storeRefreshToken,
   storeVerifyRegistrationPin,
   updateUserPasswordByEmail,
+  fetchUserById,
 } from "./userDataAccess";
 import { sgMail } from "../../lib/sgMail";
+import { decodeUserIdFromAuthToken } from "../../utils/decode-user-id-from-auth-token";
 
 const REFRESH_TOKEN_EXPIRATION = AUTH_REFRESH_TOKEN_EXPIRATION * 60;
 
@@ -115,7 +116,7 @@ export const postVerifyRegistration = async (
 
   const user = await createNewUser(
     verifyRegistrationPinBody.name,
-    email,
+    verifyRegistrationPinBody.email,
     verifyRegistrationPinBody.password,
     verifyRegistrationPinBody.timezone
   );
@@ -135,30 +136,27 @@ export const postLoginUser = async (
   app: FastifyInstance
 ) => {
   const lowerCaseEmail = email.toLowerCase();
-  const userAlreadyExists = await fetchUserByEmail(lowerCaseEmail);
+  const user = await fetchUserByEmail(lowerCaseEmail);
 
-  if (!userAlreadyExists) {
+  if (!user) {
     throw new CustomError("Email or password incorrect", 401);
   }
 
-  const passwordMatch = await bcrypt.compare(
-    password,
-    userAlreadyExists.password
-  );
+  const passwordMatch = await bcrypt.compare(password, user.password);
 
   if (!passwordMatch) {
     throw new CustomError("Email or password incorrect", 401);
   }
 
-  const token = generateAuthenticationToken(userAlreadyExists.id);
+  const accessToken = generateAuthenticationToken(user.id);
 
   const refreshToken = await storeRefreshToken(
-    userAlreadyExists.id,
+    user.id,
     REFRESH_TOKEN_EXPIRATION,
     app.redis
   );
 
-  return { token, refreshToken };
+  return { accessToken, refreshToken, user: { name: user.name, email } };
 };
 
 export const postRefreshUserToken = async (
@@ -280,4 +278,19 @@ export const postCompleteForgotPasswordReset = async (
   await updateUserPasswordByEmail(passwordHash, email);
   await deletePasswordResetPin(email, app.redis);
   return;
+};
+
+export const getUserByToken = async (
+  request: FastifyRequest,
+  reply: FastifyReply
+) => {
+  const accessToken = request.headers.authorization;
+
+  const userId = decodeUserIdFromAuthToken(accessToken!);
+
+  const user = await fetchUserById(userId);
+
+  reply
+    .send({ name: user?.name, email: user?.email, timezone: user?.timezone })
+    .code(200);
 };

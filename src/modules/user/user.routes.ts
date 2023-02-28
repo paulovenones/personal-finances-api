@@ -19,6 +19,7 @@ import {
   postRefreshUserToken,
   postVerifyRegistration,
   postCompleteForgotPasswordReset,
+  getUserByToken,
 } from "./user.service";
 
 export const userRoutes = async (app: FastifyInstance) => {
@@ -54,6 +55,9 @@ export const userRoutes = async (app: FastifyInstance) => {
     reply.status(200);
   });
 
+  // Route for get user from access token
+  app.get("/token/user", { preHandler: [ensureAuthenticated] }, getUserByToken);
+
   // Route for create a new user
   app.post("/verify-registration", async (request) => {
     const body = verifyRegistrationSchema.parse(request.body);
@@ -64,8 +68,11 @@ export const userRoutes = async (app: FastifyInstance) => {
   // Route for login a user
   app.post("/login", async (request) => {
     const loginCredentials = loginUserSchema.parse(request.body);
-    const { token, refreshToken } = await postLoginUser(loginCredentials, app);
-    return { token, refreshToken };
+    const { accessToken, refreshToken, user } = await postLoginUser(
+      loginCredentials,
+      app
+    );
+    return { accessToken, refreshToken, user };
   });
 
   // Route for refresh user auth token
